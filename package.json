@@ -1,0 +1,36 @@
+{
+  "name": "dsh-smooth-scroll",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DSH 平滑滚底插件：会话装载与“回到最新”瞬时钉底，流式内容以恒速平滑跟随（缓启动/软尾）；无 transform、不扰动输入栏等 UI、不干扰 DSH 自身跟随状态机，prefers-reduced-motion 自动回退官方行为。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "smooth-scroll",
+    "scroll"
+  ],
+  "license": "MIT"
+}
