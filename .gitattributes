@@ -1,0 +1,5 @@
+# Committed build artifacts: the build script (esbuild/tsc) emits LF. Pin the
+# committed bytes to LF so a rebuild produces a clean diff instead of a
+# full-file line-ending churn.
+lib/*.js text eol=lf
+lib/*.d.ts text eol=lf

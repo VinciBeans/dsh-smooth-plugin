@@ -175,8 +175,13 @@ function apply(ctx) {
 
     const disposeState = (state) => {
       stopAll(state)
-      if (Object.prototype.hasOwnProperty.call(state.el, 'scrollTop')) {
-        try { delete state.el.scrollTop } catch (e) { /* already gone */ }
+      const scrollDesc = Object.getOwnPropertyDescriptor(state.el, 'scrollTop')
+      // Only delete an own, configurable property — the one attach() installed.
+      // Deleting a non-configurable property would throw, and when the
+      // descriptor is already gone there is nothing left to clean up, so no
+      // try/catch is needed.
+      if (scrollDesc !== undefined && scrollDesc.configurable) {
+        delete state.el.scrollTop
       }
       state.flow = null
       states.delete(state.el)

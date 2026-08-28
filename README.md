@@ -1,5 +1,10 @@
 # dsh-smooth-scroll
 
+> 兼容目标：**dsh-0.1.2-alpha.1**。插件不依赖任何 `@deepseek-ai/dsh-client-*` 运行时包
+> （仅使用 Cordis 核心 `ctx.effect` 与浏览器原生 API），`window.__ModuleLoader__.load`
+> 模块契约与 `dsh.client.platform: web` 声明在 0.1.2-alpha.1 中保持不变，因此无需改动
+> 运行时逻辑即可适配。
+
 ## 简介
 
 让 DSH 的会话滚底从"官方瞬时跳变"变成**流畅顺滑的跟随滚动**：会话装载与"回到最新"
@@ -32,14 +37,16 @@
 1. transform 补偿方案与 DSH 的输入栏 overlay 测量偶发交错 → 输入栏瞬移/毛边（已弃）；
 2. JS rAF 手写动画会冻结/重启问题（已弃）——最终版由 getter 掩盖中间态 + 恒速模型。
 
-## 构建
+## 构建与测试
 
 ```sh
 pnpm install        # 安装 esbuild devDependency
 pnpm run build      # 产出 lib/index.js + lib/client.js
+pnpm test           # 冒烟测试：验证 __ModuleLoader__ 模块契约 + apply 导出
 ```
 
-`lib/` 已随仓库提交，克隆后可直接安装使用；改源码才需要重新构建。
+`lib/` 已随仓库提交，克隆后可直接安装使用；改源码才需要重新构建。构建产物由
+`scripts/build.mjs` 从 `src/` 规范生成（早期版本为手工维护的 bundle，已统一为 esbuild 输出）。
 
 ## 安装（永久生效）
 
