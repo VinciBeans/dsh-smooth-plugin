@@ -1,0 +1,7 @@
+# dsh 组合包层（bundle layer）：把 dsh-smooth-scroll 插入 web 配置树。
+#
+# `name` 必须是包名（而非源码相对路径）；dsh 的 client-modules 节点半部扫描到这一行，
+# 读到 dsh.client 声明后把浏览器 bundle 挂到 /plugins/dsh-smooth-scroll/client.js。
+- insert:
+    - id: 'smooth-scroll'
+      name: 'dsh-smooth-scroll'
