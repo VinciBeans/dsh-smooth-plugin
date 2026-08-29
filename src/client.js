@@ -1,5 +1,5 @@
 /**
- * dsh-smooth-scroll — browser half (final architecture: transform-free).
+ * dsh-smooth-scroll — browser half (transform-free).
  *
  * Official chat auto-scroll pins `[data-conversation-scroll]` instantly. This
  * plugin instead animates the NATIVE scrollTop with a paced JS motion model
@@ -43,7 +43,6 @@ function apply(ctx) {
     const reduced = typeof matchMedia === 'function' &&
       matchMedia('(prefers-reduced-motion: reduce)').matches
     const states = new Map()
-    let announced = false
 
     const readTop = (state) =>
       state.chase || state.settle !== null ? state.target : state.desc.get.call(state.el)
@@ -107,7 +106,6 @@ function apply(ctx) {
       const current = desc.get.call(el)
       const max = Math.max(0, el.scrollHeight - el.clientHeight)
       const target = Math.min(value, max)
-      state.pinnedTop = target
       const isPin = value >= max - 1 && Math.abs(target - current) > 0.5
       if (!isPin) {
         if (Math.abs(target - current) > 0.5) {
@@ -156,7 +154,7 @@ function apply(ctx) {
       }
       if (desc === null || typeof desc.get !== 'function' || typeof desc.set !== 'function') return
       const state = {
-        el, desc, flow: null, pinnedTop: -1, firstPin: true,
+        el, desc, firstPin: true,
         chase: false, settle: null, target: null, lastPinTs: 0, lastTs: 0,
         rafId: 0, lastWrite: 0, chaseStart: 0,
       }
@@ -167,10 +165,6 @@ function apply(ctx) {
         get() { return readTop(state) },
         set(value) { writeScrollTop(state, desc, value) },
       })
-      if (!announced) {
-        announced = true
-        console.log('[dsh-smooth-scroll] attached to the conversation scroller')
-      }
     }
 
     const disposeState = (state) => {
@@ -183,7 +177,6 @@ function apply(ctx) {
       if (scrollDesc !== undefined && scrollDesc.configurable) {
         delete state.el.scrollTop
       }
-      state.flow = null
       states.delete(state.el)
     }
 

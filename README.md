@@ -9,14 +9,9 @@
 
 让 DSH 的会话滚底从"官方瞬时跳变"变成**流畅顺滑的跟随滚动**：会话装载与"回到最新"
 保持瞬时（这是"跳"的正确语义），而流式内容增长期间，消息列以**恒定速度平滑跟随**，
-起步轻柔、收尾绵软。
+起步轻柔、收尾绵软。系统开启"减少动效"（`prefers-reduced-motion`）时自动回退官方瞬时行为。
 
-实现上**不触碰任何 transform**——直接对原生 `scrollTop` 做有节奏的动画，并用一个
-**合成 getter** 在动画期间向 DSH 报告"目标值"，因此它的跟随状态机（是否在底部、
-是否用户滚动）完全不受影响：不会误判脱钩、不会重复钉底、输入栏等 UI 丝毫不被扰动。
-系统开启"减少动效"（`prefers-reduced-motion`）时自动回退官方瞬时行为。
-
-## 行为（最终架构：无 transform）
+## 行为（无 transform）
 
 直接在**原生 scrollTop** 上做有节奏的平滑滚动，配合**合成 getter**：平滑期间
 `scrollTop` 读到"目标值"，DSH 自身的状态机（movedByReader/atBottom）永远看不到中间
@@ -32,11 +27,6 @@
 - `prefers-reduced-motion: reduce`：完全回退官方瞬时行为；
 - **不应用任何 transform**：输入栏 overlay/sticky 永不受扰（无瞬移、无毛边、无飞出）。
 
-## 历史教训（为什么不是 transform/rAF 手写）
-
-1. transform 补偿方案与 DSH 的输入栏 overlay 测量偶发交错 → 输入栏瞬移/毛边（已弃）；
-2. JS rAF 手写动画会冻结/重启问题（已弃）——最终版由 getter 掩盖中间态 + 恒速模型。
-
 ## 构建与测试
 
 ```sh
@@ -46,7 +36,7 @@ pnpm test           # 冒烟测试：验证 __ModuleLoader__ 模块契约 + appl
 ```
 
 `lib/` 已随仓库提交，克隆后可直接安装使用；改源码才需要重新构建。构建产物由
-`scripts/build.mjs` 从 `src/` 规范生成（早期版本为手工维护的 bundle，已统一为 esbuild 输出）。
+`scripts/build.mjs` 从 `src/` 规范生成。
 
 ## 安装（永久生效）
 
