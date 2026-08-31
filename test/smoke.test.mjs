@@ -52,8 +52,6 @@ globalThis.document = {
   body: {},
   documentElement: {},
   querySelectorAll: () => [],
-  addEventListener(type, fn) { this._scrollListener = fn },
-  removeEventListener(type) { delete this._scrollListener },
 }
 globalThis.requestAnimationFrame = () => 1
 globalThis.MutationObserver = class {

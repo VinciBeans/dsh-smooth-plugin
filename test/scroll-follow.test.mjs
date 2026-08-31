@@ -141,7 +141,7 @@ window.host = (() => {
     el, column, composer, realTop, desc: nativeDesc,
     get atBottom() { return atBottomRef },
     drain() { const out = events; events = []; return out },
-    toBottom, follow, commit, addRow, sleep, frame,
+    toBottom, commit, addRow, sleep, frame,
   }
 })()
 
@@ -150,11 +150,11 @@ window.host = (() => {
   const sleep = h.sleep
   const frame = h.frame
   let n = 0
-  const reset = async (rows = 30) => {
+  const reset = async () => {
     h.column.innerHTML = ''
     h.composer.classList.add('tall')
     h.drain()
-    for (let i = 0; i < rows; i++) h.addRow('row', 64)
+    for (let i = 0; i < 30; i++) h.addRow('row', 64)
     await frame()
     h.toBottom()
     await sleep(120)
@@ -173,7 +173,7 @@ window.host = (() => {
     }
   }
   const send = opts => {
-    h.addRow('user-row', opts.echoHeight ?? 48)
+    h.addRow('user-row', 48)
     if (opts.clearDraft) h.composer.classList.remove('tall')
     h.commit({ submission: true })
   }

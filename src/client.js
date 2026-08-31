@@ -59,12 +59,10 @@ function apply(ctx) {
     const stopAll = (state) => {
       state.chase = false
       state.settle = null
-      state.rafId = 0
       state.farN = 0
     }
 
     const tick = (state, ts) => {
-      state.rafId = 0
       if (!state.el.isConnected) { stopAll(state); return }
       if (state.lastTs === 0) state.lastTs = ts
       const dt = Math.min(50, ts - state.lastTs)
@@ -105,10 +103,10 @@ function apply(ctx) {
           state.lastTs = 0
           return
         }
-        state.rafId = requestAnimationFrame((t2) => tick(state, t2))
+        requestAnimationFrame((t2) => tick(state, t2))
         return
       }
-      if (!state.chase || state.target === null) {
+      if (!state.chase) {
         state.chase = false
         state.lastTs = 0
         return
@@ -123,7 +121,7 @@ function apply(ctx) {
       if (Math.abs(remaining) <= TAIL_PX && now() - state.lastPinTs > QUIET_MS) {
         state.settle = { from: pos, to: state.target, start: ts, ms: TAIL_MS }
         state.chase = false
-        state.rafId = requestAnimationFrame((t2) => tick(state, t2))
+        requestAnimationFrame((t2) => tick(state, t2))
         return
       }
       const ramp = Math.min(1, Math.max(0, (ts - state.chaseStart) / RAMP_MS))
@@ -132,7 +130,7 @@ function apply(ctx) {
       const nv = pos + step
       state.lastWrite = nv
       state.desc.set.call(state.el, nv)
-      state.rafId = requestAnimationFrame((t2) => tick(state, t2))
+      requestAnimationFrame((t2) => tick(state, t2))
     }
 
     const writeScrollTop = (state, desc, value) => {
@@ -189,7 +187,7 @@ function apply(ctx) {
         state.lastTs = 0
         state.lastWrite = current
         state.farN = 0
-        state.rafId = requestAnimationFrame((t2) => tick(state, t2))
+        requestAnimationFrame((t2) => tick(state, t2))
       }
     }
 
@@ -206,7 +204,7 @@ function apply(ctx) {
       const state = {
         el, desc, firstPin: true,
         chase: false, settle: null, target: null, lastPinTs: 0, lastTs: 0,
-        rafId: 0, lastWrite: 0, chaseStart: 0, farN: 0,
+        lastWrite: 0, chaseStart: 0, farN: 0,
       }
       states.set(el, state)
       Object.defineProperty(el, 'scrollTop', {
