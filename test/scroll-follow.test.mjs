@@ -6,11 +6,12 @@
  * 跟随），并加载构建产物 lib/client.js。随后运行发送、流式、浏览器锚定位移、
  * 真实读者拖拽等交错场景，断言宿主是否仍钉底、最终距离是否为 0。
  *
- * 回归点（曾出问题的场景）：
- *   - anchorShiftMidChase / anchorShiftMidTail：追击中途上方行塌陷触发
- *     浏览器滚动锚定，旧实现误判为读者接管 → 判定脱钩 → 发送后停在信息处；
- *     修复后必须继续跟随到底。
- *   - takeoverMidChase：真实读者持续拖拽必须停止动画并正常脱钩。
+ * 回归点（接管判定必须区分的两类偏移）：
+ *   - anchorShiftMidChase / anchorShiftMidTail：追击中上方行塌陷触发浏览器
+ *     滚动锚定（非用户输入）——不得触发接管：误判会停止动画、以 >25px 距离
+ *     脱钩，流式内容不再被跟随；必须吸收后继续跟随到底。
+ *   - takeoverMidChase / takeoverWithRepins：真实读者持续拖拽——必须触发
+ *     接管：停止动画并正常脱钩（偏离计数不得被宿主每事件钉底写吞掉）。
  *
  * 运行：  node test/scroll-follow.test.mjs
  * 需要 deepseek-harness 检出的 apps/web Playwright 与其 Chromium。

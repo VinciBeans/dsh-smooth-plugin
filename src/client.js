@@ -13,13 +13,13 @@
  *  - ramp-up: 0 → cruise over 240ms (smoothstep) on each chase start;
  *  - soft tail: when the stream is quiet (>240ms) and <=120px remains,
  *    a 220ms ease-out settles the rest;
- *  - reader takeover: a native position diverging from the animation's own
- *    last write is re-based on a single frame (browser scroll anchoring /
- *    clamping are one-shot UA adjustments, no user intent) and only
- *    stops the animation when the divergence persists across frames — real
- *    reader input keeps driving the scroller, so ≥2 consecutive diverged
- *    frames end the glide, after which the getter reports the real position
- *    again and DSH detaches as usual;
+ *  - reader takeover: a single-frame native divergence (browser scroll
+ *    anchoring — a UA adjustment with no user intent) is re-based and the
+ *    glide continues; divergence persisting across ≥2 frames instead ends
+ *    the glide — a reader drag keeps driving the scroller, and a floor clamp
+ *    (content shrinking under a stale target) diverges every frame until it
+ *    stops — after which the getter reports the real position again and DSH
+ *    stays pinned (clamp landed on the floor) or detaches as usual (reader);
  *  - same-destination pin writes (DSH's per-scroll-event toBottom fallback)
  *    are ignored so the animation is never restarted per frame.
  *
@@ -32,9 +32,10 @@ const RAMP_MS = 240      // warm-up: 0 -> cruise over this window
 const QUIET_MS = 240     // quiet before the soft tail arms
 const TAIL_PX = 120      // remaining distance that eases out
 const TAIL_MS = 220
-// 真实位置连续偏离动画写入的帧数阈值：单帧偏离多为浏览器滚动锚定、
-// 尺寸夹紧等一次性非用户位移（重基后继续追击即可）；连续 ≥2 帧的
-// 持续偏离才是真实的读者拖拽/滚轮输入，此时才判定接管并停止动画。
+// 真实位置连续偏离动画写入的帧数阈值：单帧偏离多为浏览器滚动锚定等
+// 一次性非用户位移（重基后继续追击即可）；连续 ≥2 帧的持续偏离才是
+// 读者拖拽/滚轮输入，或目标随内容收窄被夹紧失效，此时停止动画并交还
+// 宿主（getter 返回真实位置，由 DSH 状态机判定）。
 const DIVERGE_STOP_FRAMES = 2
 
 const easeOut = (t) => 1 - Math.pow(1 - t, 3)
@@ -73,9 +74,9 @@ function apply(ctx) {
         state.farN = 0
         return
       }
-      // 读者接管判定：以「连续帧偏离」为准，而非单个 scroll 事件。
-      // 一次性的真实位置变化（滚动锚定、内容塌缩后的夹紧等）重基后
-      // 继续追击；连续偏离才是用户输入，立即停止动画。
+      // 读者接管判定：以「连续帧偏离」为准，而非单个 scroll 事件。单帧偏离
+      // 多为滚动锚定等一次性非用户位移，重基后继续追击；连续 ≥2 帧偏离
+      // （真实拖拽/滚轮输入，或目标随内容收窄被夹紧）才停止动画。
       if (Math.abs(pos - state.lastWrite) > 0.5) {
         state.farN += 1
         if (state.farN >= DIVERGE_STOP_FRAMES) {
@@ -240,9 +241,8 @@ function apply(ctx) {
       requestAnimationFrame(() => { scanQueued = false; scan() })
     }
 
-    // 读者接管判定整体移入 tick：以连续帧偏离为准。滚动锚定/夹紧等
-    // 一次性非用户位移也会产生 scroll 事件，按事件判定会误杀追击；
-    // 逐帧判定只在连续 ≥2 帧偏离时才认定用户输入。
+    // 接管判定在 tick 内以连续帧偏离为准：滚动锚定等一次性非用户位移
+    // 也会产生 scroll 事件，按事件立即判定会误杀追击。
     const observer = new MutationObserver(queueScan)
     observer.observe(root, { childList: true, subtree: true })
     queueScan()
