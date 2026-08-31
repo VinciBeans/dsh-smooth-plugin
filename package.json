@@ -28,7 +28,8 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node test/smoke.test.mjs"
+    "test": "node test/smoke.test.mjs",
+    "test:e2e": "node test/scroll-follow.test.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.25.0"

@@ -14,8 +14,12 @@
  *  - soft tail: when the stream is quiet (>240ms) and <=120px remains,
  *    a 220ms ease-out settles the rest;
  *  - reader takeover: a native position diverging from the animation's own
- *    last write can only come from the user → stop animating, the getter
- *    reports the real position again and DSH detaches as usual;
+ *    last write is re-based on a single frame (browser scroll anchoring /
+ *    clamping are one-shot UA adjustments, no user intent) and only
+ *    stops the animation when the divergence persists across frames — real
+ *    reader input keeps driving the scroller, so ≥2 consecutive diverged
+ *    frames end the glide, after which the getter reports the real position
+ *    again and DSH detaches as usual;
  *  - same-destination pin writes (DSH's per-scroll-event toBottom fallback)
  *    are ignored so the animation is never restarted per frame.
  *
@@ -28,6 +32,10 @@ const RAMP_MS = 240      // warm-up: 0 -> cruise over this window
 const QUIET_MS = 240     // quiet before the soft tail arms
 const TAIL_PX = 120      // remaining distance that eases out
 const TAIL_MS = 220
+// 真实位置连续偏离动画写入的帧数阈值：单帧偏离多为浏览器滚动锚定、
+// 尺寸夹紧等一次性非用户位移（重基后继续追击即可）；连续 ≥2 帧的
+// 持续偏离才是真实的读者拖拽/滚轮输入，此时才判定接管并停止动画。
+const DIVERGE_STOP_FRAMES = 2
 
 const easeOut = (t) => 1 - Math.pow(1 - t, 3)
 const smooth = (t) => t * t * (3 - 2 * t)
@@ -51,6 +59,7 @@ function apply(ctx) {
       state.chase = false
       state.settle = null
       state.rafId = 0
+      state.farN = 0
     }
 
     const tick = (state, ts) => {
@@ -59,6 +68,31 @@ function apply(ctx) {
       if (state.lastTs === 0) state.lastTs = ts
       const dt = Math.min(50, ts - state.lastTs)
       state.lastTs = ts
+      const pos = state.desc.get.call(state.el)
+      if (state.settle === null && !state.chase) {
+        state.farN = 0
+        return
+      }
+      // 读者接管判定：以「连续帧偏离」为准，而非单个 scroll 事件。
+      // 一次性的真实位置变化（滚动锚定、内容塌缩后的夹紧等）重基后
+      // 继续追击；连续偏离才是用户输入，立即停止动画。
+      if (Math.abs(pos - state.lastWrite) > 0.5) {
+        state.farN += 1
+        if (state.farN >= DIVERGE_STOP_FRAMES) {
+          state.farN = 0
+          stopAll(state)
+          return
+        }
+        state.lastWrite = pos
+        if (state.settle !== null) {
+          // 软尾写入基于 from/to 曲线，偏离后无法直接续用 → 转回恒速追击。
+          state.settle = null
+          state.chase = true
+          state.chaseStart = ts
+        }
+      } else {
+        state.farN = 0
+      }
       if (state.settle !== null) {
         const s = state.settle
         const t = Math.min(1, (ts - s.start) / s.ms)
@@ -78,7 +112,6 @@ function apply(ctx) {
         state.lastTs = 0
         return
       }
-      const pos = state.desc.get.call(state.el)
       const remaining = Math.max(0, state.target) - pos
       if (Math.abs(remaining) <= 0.5) {
         state.desc.set.call(state.el, Math.max(0, state.target))
@@ -103,14 +136,23 @@ function apply(ctx) {
 
     const writeScrollTop = (state, desc, value) => {
       const el = state.el
-      const current = desc.get.call(el)
+      // 先强制布局（scrollHeight 会触发），再读当前位置：夹紧/锚定只在
+      // 布局后生效，先读会拿到夹紧前的缓存值，导致钉底判定失真。
       const max = Math.max(0, el.scrollHeight - el.clientHeight)
+      const current = desc.get.call(el)
       const target = Math.min(value, max)
-      const isPin = value >= max - 1 && Math.abs(target - current) > 0.5
+      const pinIntent = value >= max - 1
+      const isPin = pinIntent && Math.abs(target - current) > 0.5
       if (!isPin) {
         if (Math.abs(target - current) > 0.5) {
           stopAll(state)
           desc.set.call(el, value)
+        } else if (pinIntent && (state.chase || state.settle !== null)) {
+          // 钉底写但真实位置已在目的地：若动画目标因夹紧/锚定而早已
+          // 过期，立即对齐归一，避免继续朝一个超出新夹紧范围的旧目标追。
+          state.target = target
+          stopAll(state)
+          state.lastWrite = current
         }
         return
       }
@@ -135,6 +177,10 @@ function apply(ctx) {
       state.target = target
       state.settle = null
       state.lastPinTs = now()
+      // 以钉底写自身的基线对齐 lastWrite/farN：本次写没有移动真实位置，
+      // 下一个 tick 不应把它当成一次偏离。
+      state.lastWrite = current
+      state.farN = 0
       if (!state.chase) {
         state.chase = true
         state.chaseStart = now()
@@ -156,7 +202,7 @@ function apply(ctx) {
       const state = {
         el, desc, firstPin: true,
         chase: false, settle: null, target: null, lastPinTs: 0, lastTs: 0,
-        rafId: 0, lastWrite: 0, chaseStart: 0,
+        rafId: 0, lastWrite: 0, chaseStart: 0, farN: 0,
       }
       states.set(el, state)
       Object.defineProperty(el, 'scrollTop', {
@@ -191,27 +237,15 @@ function apply(ctx) {
       requestAnimationFrame(() => { scanQueued = false; scan() })
     }
 
-    const onDocScroll = (event) => {
-      const target = event.target
-      if (target === null || target === undefined) return
-      const state = states.get(target)
-      if (state === undefined) return
-      const real = state.desc.get.call(state.el)
-      if ((state.chase || state.settle !== null) &&
-          Math.abs(real - state.lastWrite) > 0.5) {
-        // reader took over mid-motion
-        stopAll(state)
-      }
-    }
-    doc.addEventListener('scroll', onDocScroll, { capture: true, passive: true })
-
+    // 读者接管判定整体移入 tick：以连续帧偏离为准。滚动锚定/夹紧等
+    // 一次性非用户位移也会产生 scroll 事件，按事件判定会误杀追击；
+    // 逐帧判定只在连续 ≥2 帧偏离时才认定用户输入。
     const observer = new MutationObserver(queueScan)
     observer.observe(root, { childList: true, subtree: true })
     queueScan()
 
     return () => {
       observer.disconnect()
-      doc.removeEventListener('scroll', onDocScroll, true)
       for (const state of [...states.values()]) disposeState(state)
     }
   })

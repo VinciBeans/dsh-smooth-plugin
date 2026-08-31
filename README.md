@@ -38,7 +38,7 @@ dsh --profile web --dump-config          # 看到 dsh-smooth-scroll 层即安装
 直接在原生 `scrollTop` 上做有节奏的平滑滚动，配合合成 getter：平滑期间 `scrollTop` 读到目标值，DSH 自身状态机看不到中间位置，不误判脱钩、不重复钉底。
 
 - **速度剖面:** 起步 0 到 0.9px/ms 用 240ms 缓升，巡航恒速 0.9px/ms，收尾 220ms 软着陆。
-- **用户滚动接管:** 真实位置偏离动画写入时立即停动画，DSH 正常脱钩，回到最新按钮照常。
+- **用户滚动接管:** 真实位置连续偏离动画写入 ≥2 帧才停动画，DSH 正常脱钩，回到最新按钮照常；单帧偏差（浏览器滚动锚定、尺寸夹紧等一次性非用户位移）自动重基后继续钉底跟随——发送消息后不再因误判停在信息处。
 - **同目标兜底:** DSH 每滚动事件重跑 toBottom 而目标不变时忽略，动画不被逐帧重启。
 - **减少动效:** prefers-reduced-motion 时完全回退官方瞬时行为。
 - **无 transform:** 不应用任何 transform，输入栏 overlay/sticky 永不受扰。
@@ -52,6 +52,7 @@ dsh --profile web --dump-config          # 看到 dsh-smooth-scroll 层即安装
 | QUIET_MS | 240 | 判定停止增长的静默窗口 |
 | TAIL_PX | 120 | 进入软尾的剩余距离阈值 |
 | TAIL_MS | 220 | 软尾缓动时长 |
+| DIVERGE_STOP_FRAMES | 2 | 真实位置连续偏离动画写入的帧数阈值（≥2 帧判定读者接管） |
 
 改参数：编辑 `src/client.js` 顶部常量区，`pnpm run build` 后重启 dsh web。
 
