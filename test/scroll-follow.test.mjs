@@ -319,6 +319,24 @@ window.host = (() => {
       stream(24, 30)
       await sleep(1200)
     },
+    // 回归点：DSH 钉底时每个 scroll 事件都会在 onScroll 里重跑 toBottom
+    // （getter 掩盖中间位置时保持钉底），重钉写不得重置接管计数——
+    // 持续小幅拖拽在每事件重钉底之下仍必须停止动画并让宿主脱钩。
+    takeoverWithRepins: async () => {
+      await reset()
+      h.el.scrollTop -= 600
+      await h.frame(); await h.sleep(60)
+      send({ clearDraft: true })
+      await h.sleep(120)
+      const rawWrite = delta => void h.desc.set.call(h.el, h.desc.get.call(h.el) + delta)
+      for (let i = 0; i < 8; i++) {
+        rawWrite(-60)          // 宿主 onScroll 随每个 scroll 事件重跑 toBottom
+        await h.frame()
+      }
+      await h.sleep(300)
+      stream(24, 30)
+      await sleep(1200)
+    },
   }
   const report = () => {
     const floor = h.el.scrollHeight - h.el.clientHeight
@@ -369,6 +387,7 @@ async function main() {
     ['bigDeltaMidChase', true],
     ['sendWhileStreaming', true],
     ['takeoverMidChase', false],
+    ['takeoverWithRepins', false],
   ]
   let failed = 0
   for (const [name, expectPinned] of cases) {

@@ -177,14 +177,17 @@ function apply(ctx) {
       state.target = target
       state.settle = null
       state.lastPinTs = now()
-      // 以钉底写自身的基线对齐 lastWrite/farN：本次写没有移动真实位置，
-      // 下一个 tick 不应把它当成一次偏离。
-      state.lastWrite = current
-      state.farN = 0
       if (!state.chase) {
+        // 仅追击启动时对齐基线：lastWrite 可能来自早已结束的上一段追击，
+        // 不重置会让首个 tick 误计一次偏离（会被单帧吸收路径兜住，但仍是
+        // 噪音）。重钉底（chase 已在跑）绝不能重置——宿主钉底时每个 scroll
+        // 事件都会重跑 toBottom，若此处清零 farN/lastWrite，真实拖拽的
+        // 连续偏离会被逐帧吞掉：动画永不停止、与用户持续对抗。
         state.chase = true
         state.chaseStart = now()
         state.lastTs = 0
+        state.lastWrite = current
+        state.farN = 0
         state.rafId = requestAnimationFrame((t2) => tick(state, t2))
       }
     }
