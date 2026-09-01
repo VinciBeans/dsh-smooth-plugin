@@ -213,8 +213,8 @@ function apply(ctx) {
       // 读者按下即接管：pointerdown（capture）意味着真实用户意图，立即停
       // 动画并让 getter 回落真实值。这样宿主在此之后做的任何复合读改写
       // （如 alpha.3 导轨跳转的 el.scrollTop += flowTop - 24）都基于真实
-      // 位置，不会被合成目标值整体偏移；拖拽/滚轮等持续输入也从此提前
-      // 接管，不再依赖 2 帧偏离判定。输入栏（composer-seat）除外：在
+      // 位置，不会被合成目标值整体偏移；拖拽、滚轮等持续输入也会在按下时
+      // 提前接管，不再依赖 2 帧偏离判定。输入栏（composer-seat）除外：在
       // 输入框内按下不中断钉底跟随。
       const stopOnPointerDown = (event) => {
         if (!state.chase && state.settle === null) return

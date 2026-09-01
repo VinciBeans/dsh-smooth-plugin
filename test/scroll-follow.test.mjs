@@ -328,9 +328,11 @@ window.host = (() => {
     // 必须读到真实位置（pointerdown 先停动画），落点行才停在阅读线
     // （flowTop ≈ 24）；否则落点偏移剩余追击距离。
     railClickMidChase: async () => {
-      // 关闭浏览器滚动锚定：无锚定时内容增长不会自动顶起 real，宿主钉底
-      // 写出 |target - real| > 0.5 的差值——追击真实滞后（与真实 DSH 中
-      // 流式多帧落地的行为对应），点击时合成 getter 与 real 存在偏差。
+      // 复刻页默认的浏览器滚动锚定会在钉底时把真实位置顶到新底部，host
+      // 的钉底写到达时 |target - real| 已 ≈ 0（isPin 为假，追击不启动），
+      // 「追击进行中」的状态无法复现。关闭锚定后钉底写才留下
+      // |target - real| > 0.5 的差值，追击真实滞后，场景才能覆盖
+      // 「复合读改写读到合成目标」这一失败路径。
       h.el.classList.add('no-anchor')
       await reset()
       send({ clearDraft: true })
