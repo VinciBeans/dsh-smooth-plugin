@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/dsh-smooth-scroll">
-    <img src="https://img.shields.io/npm/v/dsh-smooth-scroll?style=flat&colorA=000000&colorB=000000" />
+    <img src="https://img.shields.io/npm/v/dsh-smooth-scroll/alpha?style=flat&colorA=000000&colorB=000000" />
   </a>
   <a href="https://github.com/VinciBeans/dsh-smooth-plugin/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/VinciBeans/dsh-smooth-plugin?style=flat&colorA=000000&colorB=000000" />
@@ -19,17 +19,20 @@
 
 ## Install
 
+从 npm 安装（`alpha` dist-tag 指向 0.1.2-alpha.3，适配 dsh v0.1.2-alpha.1 ~ alpha.3）：
+
 ```sh
-dsh plugin --profile web add dsh-smooth-scroll
+dsh plugin --profile web add dsh-smooth-scroll@alpha
 ```
 
 需要已安装 DSH，并至少成功启动过一次 Web GUI。
-面向dsh 0.1.1-rc.2版本，0.1.2-alpha.*版本请使用源码安装。
+
+npm `latest`（0.1.1-rc.2）仍是旧 client-runtime 代，仅适配 dsh 0.1.1-rc.2；安装它的命令为 `dsh plugin --profile web add dsh-smooth-scroll`。源码安装：`dsh plugin --profile web add .`。
 
 ## Quickstart
 
 ```sh
-dsh plugin --profile web add dsh-smooth-scroll
+dsh plugin --profile web add dsh-smooth-scroll@alpha
 dsh --profile web --dump-config          # 看到 dsh-smooth-scroll 层即安装成功
 # 重启 dsh web，打开会话，流式内容平滑滚到底部
 ```
