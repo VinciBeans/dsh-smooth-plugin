@@ -25,4 +25,7 @@ Chromium（脚本通过 `%LOCALAPPDATA%/ms-playwright` 解析可执行文件）�
 直接在原生 `scrollTop` 上做有节奏的平滑滚动，配合合成 getter：平滑期间 `scrollTop`
 读到目标值，DSH 的状态机（movedByReader/atBottom）看不到中间位置，不重复钉底；
 真实位置单帧偏离（浏览器滚动锚定等非用户位移）自动重基后继续跟随，连续 ≥2 帧
-偏离才判定读者接管并停止动画，交还宿主决策。
+偏离才判定读者接管并停止动画，交还宿主决策。宿主内（输入栏除外）的指针按下
+会立即停动画并让 getter 回落真实值——alpha.3 的 turn 导轨跳转（`landOnRow` 的
+复合读改写）由此读到真实位置，落点不被合成目标偏移（e2e 场景
+`railClickMidChase` 覆盖该路径）。
