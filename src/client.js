@@ -20,6 +20,10 @@
  *    (content shrinking under a stale target) diverges every frame until it
  *    stops — after which the getter reports the real position again and DSH
  *    stays pinned (clamp landed on the floor) or detaches as usual (reader);
+ *    a pointerdown inside the scrollport additionally ends the glide
+ *    immediately (真实指针 = 用户意图), so any subsequent host compound
+ *    read-modify-write of scrollTop (alpha.3 导轨跳转的 landOnRow) reads the
+ *    real position instead of a stale synthetic target;
  *  - same-destination pin writes (DSH's per-scroll-event toBottom fallback)
  *    are ignored so the animation is never restarted per frame.
  *
@@ -206,6 +210,21 @@ function apply(ctx) {
         chase: false, settle: null, target: null, lastPinTs: 0, lastTs: 0,
         lastWrite: 0, chaseStart: 0, farN: 0,
       }
+      // 读者按下即接管：pointerdown（capture）意味着真实用户意图，立即停
+      // 动画并让 getter 回落真实值。这样宿主在此之后做的任何复合读改写
+      // （如 alpha.3 导轨跳转的 el.scrollTop += flowTop - 24）都基于真实
+      // 位置，不会被合成目标值整体偏移；拖拽/滚轮等持续输入也从此提前
+      // 接管，不再依赖 2 帧偏离判定。输入栏（composer-seat）除外：在
+      // 输入框内按下不中断钉底跟随。
+      const stopOnPointerDown = (event) => {
+        if (!state.chase && state.settle === null) return
+        const target = event.target
+        if (!(target instanceof Element)) return
+        if (target.closest('[data-composer-seat]') !== null) return
+        stopAll(state)
+      }
+      state.stopOnPointerDown = stopOnPointerDown
+      el.addEventListener('pointerdown', stopOnPointerDown, true)
       states.set(el, state)
       Object.defineProperty(el, 'scrollTop', {
         configurable: true,
@@ -217,6 +236,7 @@ function apply(ctx) {
 
     const disposeState = (state) => {
       stopAll(state)
+      state.el.removeEventListener('pointerdown', state.stopOnPointerDown, true)
       const scrollDesc = Object.getOwnPropertyDescriptor(state.el, 'scrollTop')
       // Only delete an own, configurable property — the one attach() installed.
       // Deleting a non-configurable property would throw, and when the

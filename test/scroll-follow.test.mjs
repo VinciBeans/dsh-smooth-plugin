@@ -67,11 +67,14 @@ const PAGE = `<!doctype html>
     background: #fff;
     font: 13px/1.4 system-ui, sans-serif;
   }
+  #scroll.no-anchor { overflow-anchor: none; }
   #view { flex: 1 0 auto; min-height: auto; }
   #column { display: flex; flex-direction: column; gap: 8px; padding: 8px; }
   .row { flex: none; background: #eef; border-radius: 4px; }
   .user-row { flex: none; background: #dfd; border-radius: 4px; }
   .bubble { background: #fee; border-radius: 4px; padding: 4px; white-space: pre-wrap; }
+  #rail { flex: none; position: sticky; top: 0; z-index: 6; background: #fff; }
+  #railTarget { height: 22px; border: 0; background: #eee; }
   #composerSeat { flex: none; position: sticky; bottom: 0; z-index: 7; background: #fff; }
   #composerCard { height: 52px; background: #ccc; }
   #composerSeat.tall #composerCard { height: 208px; }
@@ -79,7 +82,10 @@ const PAGE = `<!doctype html>
 <body>
   <div id="root">
     <div id="scroll" data-conversation-scroll="">
-      <div id="view"><div id="column"></div></div>
+      <div id="view">
+        <div id="rail"><button id="railTarget" type="button" data-chat-anchor-key="t9" data-turn="9">turn 9</button></div>
+        <div id="column"></div>
+      </div>
       <div id="composerSeat" data-composer-seat=""><div id="composerCard"></div></div>
     </div>
   </div>
@@ -137,11 +143,23 @@ window.host = (() => {
     r.style.height = h + 'px'
     column.appendChild(r)
   }
+  // alpha.3 的 landOnRowRef 复刻（ChatView.tsx:406）：
+  // 复合读改写「el.scrollTop += flowTop(row, el) - 24」读到的正是插件
+  // 合成 getter 当前报告的值；返回写入后的目标行 flowTop 供断言落点。
+  const landOnRow = (turn) => {
+    const row = column.querySelector('[data-chat-anchor-key="t' + turn + '"]')
+    el.scrollTop += (row.getBoundingClientRect().top - el.getBoundingClientRect().top) - 24
+    observedTopRef = el.scrollTop
+    const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= FOLLOW_THRESHOLD + 1
+    atBottomRef = isAtBottom
+    log({ t: 'landOnRow', turn, getter: el.scrollTop, real: realTop(), floor: el.scrollHeight - el.clientHeight })
+    return Math.round((row.getBoundingClientRect().top - el.getBoundingClientRect().top) * 10) / 10
+  }
   return {
     el, column, composer, realTop, desc: nativeDesc,
     get atBottom() { return atBottomRef },
     drain() { const out = events; events = []; return out },
-    toBottom, commit, addRow, sleep, frame,
+    toBottom, commit, addRow, sleep, frame, landOnRow,
   }
 })()
 
@@ -305,6 +323,40 @@ window.host = (() => {
       await sleep(1200)
     },
     // 回归点：真实读者拖拽（持续偏离）必须停止动画并让宿主脱钩。
+    // 回归点（alpha.3 新增 jump-to-turn 机制）：追击进行中点击导轨跳到
+    // 旧 turn——宿主 landOnRow 的复合写「el.scrollTop += flowTop - 24」
+    // 必须读到真实位置（pointerdown 先停动画），落点行才停在阅读线
+    // （flowTop ≈ 24）；否则落点偏移剩余追击距离。
+    railClickMidChase: async () => {
+      // 关闭浏览器滚动锚定：无锚定时内容增长不会自动顶起 real，宿主钉底
+      // 写出 |target - real| > 0.5 的差值——追击真实滞后（与真实 DSH 中
+      // 流式多帧落地的行为对应），点击时合成 getter 与 real 存在偏差。
+      h.el.classList.add('no-anchor')
+      await reset()
+      send({ clearDraft: true })
+      await h.sleep(150)
+      // 流式进行中点击导轨：最后一次 commit 后【立即】（不加 sleep）
+      // 执行 pointerdown + 宿主 landOnRow。
+      stream(14, 30)
+      const target = h.column.querySelector('.row')
+      target.dataset.chatAnchorKey = 't9'
+      target.dataset.turn = '9'
+      const railBtn = document.getElementById('railTarget')
+      railBtn.dispatchEvent(new PointerEvent('pointerdown', {
+        bubbles: true, cancelable: true, pointerId: 1, pointerType: 'mouse', isPrimary: true,
+      }))
+      await h.frame()
+      const getterBefore = h.el.scrollTop
+      window.scenarioResult = {
+        landOnRow: h.landOnRow('9'),
+        getterBefore,
+        realBefore: h.realTop(),
+        chaseActive: getterBefore !== h.realTop(),
+      }
+      await h.sleep(300)
+      await h.frame()
+      h.el.classList.remove('no-anchor')
+    },
     takeoverMidChase: async () => {
       await reset()
       h.el.scrollTop -= 600
@@ -349,7 +401,7 @@ window.host = (() => {
   }
   window.repro = {
     scenarios,
-    run: async name => { await scenarios[name](); return report() },
+    run: async name => { await scenarios[name](); return { ...report(), ...(window.scenarioResult ?? {}) } },
     reset,
   }
 })()
@@ -387,20 +439,23 @@ async function main() {
     ['streamWithAboveShift', true],
     ['bigDeltaMidChase', true],
     ['sendWhileStreaming', true],
+    ['railClickMidChase', 'land'],
     ['takeoverMidChase', false],
     ['takeoverWithRepins', false],
   ]
   let failed = 0
   for (const [name, expectPinned] of cases) {
     const report = await page.evaluate(name => window.repro.run(name), name)
-    const ok = expectPinned
+    const ok = expectPinned === true
       ? report.atBottomRef && report.distanceFromBottom <= 1
-      : !report.atBottomRef && report.distanceFromBottom > 25
+      : expectPinned === 'land'
+        ? Math.abs((report.landOnRow ?? 0) - 24) <= 8
+        : !report.atBottomRef && report.distanceFromBottom > 25
     if (!ok) {
       failed += 1
       for (const ev of report.events) console.error('   ', JSON.stringify(ev))
     }
-    console.log(`${ok ? 'PASS' : 'FAIL'} ${name} (atBottom=${report.atBottomRef}, 距离=${report.distanceFromBottom}px)`)
+    console.log(`${ok ? 'PASS' : 'FAIL'} ${name} (atBottom=${report.atBottomRef}, 距离=${report.distanceFromBottom}px, 落点=${report.landOnRow}px${report.chaseActive === undefined ? '' : `, 点击时追击=${report.chaseActive}(getter=${report.getterBefore}/real=${report.realBefore})`})`)
   }
   await browser.close()
   if (failed > 0) process.exit(1)

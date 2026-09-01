@@ -58,8 +58,9 @@ dsh --profile web --dump-config          # 看到 dsh-smooth-scroll 层即安装
 
 ## 兼容性
 
-- **npm 正式版 0.1.1-rc.2:** 适配 npm 上的 dsh 0.1.1-rc.2（client-runtime 一代）。
-- **开发版 0.1.2-alpha.1:** main 分支，适配 dsh GitHub 最新版（cordis-Context 一代）。
+- **dsh v0.1.2-alpha.1 ~ alpha.3（支持）:** 插件的唯一 DOM 锚点 `[data-conversation-scroll]`（会话滚动容器）与宿主跟随状态机（`observedTopRef` / `movedByReader` / ResizeObserver follow、`el.scrollTop` 读写面）在 `dsh-v0.1.2-alpha.1`、`dsh-v0.1.2-alpha.2`、`dsh-v0.1.2-alpha.3` 三个 tag 上一致——alpha.3 只在滚动容器外多包了一层 `.body`，属性与滚动语义未变。alpha.3 新增的 turn 导轨跳转（`landOnRow` 的 `el.scrollTop += flowTop - 24` 复合读改写）遇到插件追击时会被 pointerdown 接管先停动画，复合写读到真实位置，落点不被合成 getter 偏移；该接管在三个版本上同样生效。
+- **0.1.1-rc.2 及更早（不支持）:** 该代使用 `@deepseek-ai/dsh-client-runtime`，滚动宿主结构不同，不兼容。
+- 验证：`pnpm test`（契约冒烟，bundle 自包含）+ `node test/scroll-follow.test.mjs`（15 个 e2e 场景，含「追击中点击导轨」回归点；需 Playwright 与 Chromium）。
 
 ## License
 
