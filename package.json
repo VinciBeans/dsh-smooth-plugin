@@ -1,7 +1,7 @@
 {
   "name": "dsh-smooth-scroll",
-  "version": "0.1.2-alpha.3",
-  "description": "DSH 平滑滚底插件：会话装载与“回到最新”瞬时钉底，流式内容以恒速平滑跟随（缓启动/软尾）；无 transform、不扰动输入栏等 UI、不干扰 DSH 自身跟随状态机，prefers-reduced-motion 自动回退官方行为。适配 dsh-v0.1.2-alpha.1 ~ alpha.3。",
+  "version": "0.1.2-alpha.4",
+  "description": "DSH 平滑滚底插件：会话装载与“回到最新”瞬时钉底，流式内容以恒速平滑跟随（缓启动/软尾）；无 transform、不扰动输入栏等 UI、不干扰 DSH 自身跟随状态机，prefers-reduced-motion 自动回退官方行为。适配 dsh-v0.1.2-alpha.1 ~ alpha.4。",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
