@@ -32,4 +32,4 @@ pnpm test        # 冒烟测试
 - 改 `src/` 后必须重新构建（`pnpm run build`），保持 `lib/` 与 `src/` 同步。
 - 参数常量位于 `src/client.js` 顶部（VEL / RAMP_MS / QUIET_MS / TAIL_PX / TAIL_MS），改参数只动常量区。
 - 不修改 `node_modules/`、`cordis.patch.yml`（除非任务明确要求）。
-- 涉及 DSH 适配版本（npm 0.1.1-rc.2 一代 vs GitHub 开发版 0.1.2-alpha.1 ~ alpha.3 一代）时，注意区分，勿混用；多版本兼容矩阵与验证方式见 README.md 的「兼容性」节。
+- 涉及 DSH 适配版本（npm 0.1.1-rc.2 一代 vs GitHub 开发版 0.1.2-alpha.1 ~ alpha.5 一代）时，注意区分，勿混用；多版本兼容矩阵与验证方式见 README.md 的「兼容性」节。

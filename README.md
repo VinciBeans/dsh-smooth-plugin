@@ -19,7 +19,7 @@
 
 ## Install
 
-从 npm 安装（`alpha` dist-tag；当前版本 0.1.2-alpha.4，适配 dsh v0.1.2-alpha.1 ~ alpha.4）：
+从 npm 安装（`alpha` dist-tag；当前版本 0.1.2-alpha.5，适配 dsh v0.1.2-alpha.1 ~ alpha.5）：
 
 ```sh
 dsh plugin --profile web add dsh-smooth-scroll@alpha
@@ -62,7 +62,7 @@ dsh --profile web --dump-config          # 看到 dsh-smooth-scroll 层即安装
 
 ## 兼容性
 
-- **dsh v0.1.2-alpha.1 ~ alpha.4（支持）:** 插件的唯一 DOM 锚点 `[data-conversation-scroll]`（会话滚动容器，ConversationRoot 的 scrollBody）与宿主跟随状态机（`observedTopRef` / `movedByReader` / ResizeObserver follow、`el.scrollTop` 读写面）在 `dsh-v0.1.2-alpha.1` ~ `dsh-v0.1.2-alpha.4` 四个 tag 上一致；turn 导轨跳转 `landOnRow` 仍为 `el.scrollTop += flowTop - 24` 复合读改写，pointerdown 接管先停动画、复合写读到真实位置。alpha.4 把宿主滚动几何采样改为每 500ms 一次并以 `scrollend` 提前采样（`ChatView` 的 `SCROLL_SAMPLE_INTERVAL_MS`）；真实宿主行为 e2e（见验证）确认该节奏下追击无停顿（流式最大离底 0px、追击停顿 0ms）、滚轮接管后漂移 0px 且宿主正常脱钩。
+- **dsh v0.1.2-alpha.1 ~ alpha.5（支持）:** 插件的唯一 DOM 锚点 `[data-conversation-scroll]`（会话滚动容器，ConversationRoot 的 scrollBody）与宿主跟随状态机（`observedTopRef` / `movedByReader` / ResizeObserver follow、`el.scrollTop` 读写面）在 `dsh-v0.1.2-alpha.1` ~ `dsh-v0.1.2-alpha.5` 五个 tag 上一致；turn 导轨跳转 `landOnRow` 仍为 `el.scrollTop += flowTop - 24` 复合读改写，pointerdown 接管先停动画、复合写读到真实位置。alpha.4 把宿主滚动几何采样改为每 500ms 一次并以 `scrollend` 提前采样（`ChatView` 的 `SCROLL_SAMPLE_INTERVAL_MS`）；真实宿主行为 e2e（见验证）确认该节奏下追击无停顿（流式最大离底 0px、追击停顿 0ms）、滚轮接管后漂移 0px 且宿主正常脱钩。仓库 master HEAD（alpha.5 之后 38 个提交、package 版本仍为 alpha.5）的 `ChatView` 相对 alpha.4 零差异（仅 `loadImage` 下传），滚动状态机一致。
 - **0.1.1-rc.2 及更早（不支持）:** 该代使用 `@deepseek-ai/dsh-client-runtime`，滚动宿主结构不同，不兼容。
 - 验证：`pnpm test`（契约冒烟，bundle 自包含）+ `node test/scroll-follow.test.mjs`（15 个 e2e 场景，含「追击中点击导轨」回归点；需 Playwright 与 Chromium）+ `node test/alpha4-realhost-e2e.mjs <token>`（真实 `dsh web` 0.1.2-alpha.4 + 真 Chromium：流式追击、滚轮接管、导轨跳转、reduced-motion、控制台错误；token 取自 `dsh web` 启动输出）。
 
