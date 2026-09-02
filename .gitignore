@@ -1,3 +1,5 @@
 # 依赖与日志不入库；lib/ 保留提交（构建产物随包分发，克隆即可安装使用）
 node_modules/
 *.log
+# 真实宿主 e2e 的运行产物（每次运行覆写）
+test/alpha4-e2e-report.json
