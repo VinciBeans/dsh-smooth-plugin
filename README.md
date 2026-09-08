@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/dsh-smooth-scroll">
-    <img src="https://img.shields.io/npm/v/dsh-smooth-scroll/alpha?style=flat&colorA=000000&colorB=000000" />
+    <img src="https://img.shields.io/npm/v/dsh-smooth-scroll?style=flat&colorA=000000&colorB=000000" />
   </a>
   <a href="https://github.com/VinciBeans/dsh-smooth-plugin/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/VinciBeans/dsh-smooth-plugin?style=flat&colorA=000000&colorB=000000" />
@@ -21,25 +21,24 @@
 
 需要已安装 DSH，并至少成功启动过一次 Web GUI。从 npm 安装（按 dist-tag 选择）：
 
-1. **npm `latest`**（0.1.1-rc.2）— 兼容 dsh v0.1.1-rc.2（旧 client-runtime 代）：
+1. **npm `latest`**（0.1.2-rc.1，与 `next` 同步）— 兼容 dsh v0.1.2-alpha.1 ~ 0.1.3-alpha.2：
    ```sh
    dsh plugin --profile web add dsh-smooth-scroll
+   # 等价写法：dsh plugin --profile web add dsh-smooth-scroll@next
    ```
-2. **npm `next`**（0.1.2-rc.1）— 兼容 dsh v0.1.2-alpha.1 ~ rc.1：
-   ```sh
-   dsh plugin --profile web add dsh-smooth-scroll@next
-   ```
-3. **npm `alpha`**（0.1.2-alpha.5）— 兼容 dsh v0.1.2-alpha.1 ~ rc.1（与 `next` 同一契约代）：
+2. **npm `alpha`**（0.1.2-alpha.5）— 与 `latest` 同一契约代、兼容范围相同，保守通道：
    ```sh
    dsh plugin --profile web add dsh-smooth-scroll@alpha
    ```
 
-源码安装（GitHub Release `v0.1.2-rc.1` 即当前源码版）：`dsh plugin --profile web add .`。
+旧代 `0.1.1-rc.2` 不再挂在任何 dist-tag 上，仅可按确切版本安装（不兼容，见「兼容性」）。
+
+源码安装（GitHub Release `v0.1.3-alpha.2` 即当前源码版）：`dsh plugin --profile web add .`。
 
 ## Quickstart
 
 ```sh
-dsh plugin --profile web add dsh-smooth-scroll@alpha
+dsh plugin --profile web add dsh-smooth-scroll
 dsh --profile web --dump-config          # 看到 dsh-smooth-scroll 层即安装成功
 # 重启 dsh web，打开会话，流式内容平滑滚到底部
 ```
@@ -70,8 +69,9 @@ dsh --profile web --dump-config          # 看到 dsh-smooth-scroll 层即安装
 ## 兼容性
 
 - **dsh v0.1.2-alpha.1 ~ rc.1（支持）:** 插件的唯一 DOM 锚点 `[data-conversation-scroll]`（会话滚动容器，ConversationRoot 的 scrollBody）与宿主跟随状态机（`observedTopRef` / `movedByReader` / ResizeObserver follow、`el.scrollTop` 读写面）在 `dsh-v0.1.2-alpha.1` ~ `dsh-v0.1.2-alpha.5` 五个 tag 上一致；`dsh-v0.1.2-rc.1` 相对 alpha.5 的整仓差异仅全仓包 `package.json` 版本号变更（非 `package.json` 文件零变化、非版本行零变化），`[data-conversation-scroll]` / `[data-composer-seat]` 锚点、`el.scrollTop = el.scrollHeight` 钉底写与跟随状态机均在 rc.1 tag 上复核，与 alpha.5 逐字一致；turn 导轨跳转 `landOnRow` 仍为 `el.scrollTop += flowTop - 24` 复合读改写，pointerdown 接管先停动画、复合写读到真实位置。alpha.4 把宿主滚动几何采样改为每 500ms 一次并以 `scrollend` 提前采样（`ChatView` 的 `SCROLL_SAMPLE_INTERVAL_MS`）；真实宿主行为 e2e（见验证）确认该节奏下追击无停顿（流式最大离底 0px、追击停顿 0ms）、滚轮接管后漂移 0px 且宿主正常脱钩。
+- **dsh v0.1.3-alpha.2（支持）:** 契约面与 rc.1 逐字一致——`packages/client/modules` 的模块系统（`client/system.ts` / `client/manifest.ts` 零差异）、`dsh.client` 扫描与 `./client` 导出要求、`dsh plugin add` 的 bundle 层重建（`apps/cli/src/plugin.ts` 零差异）、`cordis.patch.yml` 的 insert 行、`ctx.effect` 客户端 API 全部不变；DOM 锚点 `[data-conversation-scroll]`（`ConversationRoot.tsx`）与跟随状态机（`observedTopRef` / `movedByReader` / `toBottom` 的 `el.scrollTop = el.scrollHeight` / `landOnRow` 复合读改写）逐行保留。唯一相关变更在 `ChatView.tsx:604-616`：`onScroll` 在「已贴底且非读者位移」时改为同步 `sample()`（取代 500ms 定时器 + `scrollend` 兜底）。该变更对插件中性——真 Chromium 实测宿主钉底在 rc.1（经 `scrollend`）与 alpha.2（经 `scroll`）下都是每帧一次，插件「同目标重钉不重启追击」的兜底照常生效；`node test/alpha2-realhost-e2e.mjs` 在真实 `dsh web` 0.1.3-alpha.2 上复核：流式追击最终离底 0px / 最大离底 75px / 追击停顿 0ms，滚轮接管后漂移 0px 且宿主出现「回到底部」，导轨跳转漂移 0px，reduced-motion 下 220ms 内钉底，浏览器零 console 错误。
 - **0.1.1-rc.2 及更早（不支持）:** 该代使用 `@deepseek-ai/dsh-client-runtime`，滚动宿主结构不同，不兼容。
-- 验证：`pnpm test`（契约冒烟，bundle 自包含）+ `node test/scroll-follow.test.mjs`（15 个 e2e 场景，含「追击中点击导轨」回归点；需 Playwright 与 Chromium）+ `node test/alpha4-realhost-e2e.mjs <token>`（真实 `dsh web` 0.1.2-alpha.4 + 真 Chromium：流式追击、滚轮接管、导轨跳转、reduced-motion、控制台错误；token 取自 `dsh web` 启动输出）。
+- 验证：`pnpm test`（契约冒烟，bundle 自包含）+ `node test/scroll-follow.test.mjs`（15 个 e2e 场景，含「追击中点击导轨」回归点；需 Playwright 与 Chromium）+ `node test/alpha2-realhost-e2e.mjs <token>`（真实 `dsh web` 0.1.3-alpha.2 + 真 Chromium：流式追击、滚轮接管、导轨跳转、reduced-motion、控制台错误；token 取自 `dsh web` 启动输出）+ `node test/alpha4-realhost-e2e.mjs <token>`（同上，针对 0.1.2-alpha.4）。
 
 ## License
 
