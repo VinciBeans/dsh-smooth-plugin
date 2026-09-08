@@ -1,4 +1,4 @@
-/** Shared helpers for the alpha.4 real-host e2e (browser + URL construction). */
+/** Shared helpers for the real-host e2e scripts (browser + URL construction). */
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -21,6 +21,6 @@ export function resolveChromium() {
   return undefined
 }
 
-export function entryUrl(token) {
-  return `http://127.0.0.1:3415/?token=${encodeURIComponent(token)}`
+export function entryUrl(token, port = 3415) {
+  return `http://127.0.0.1:${port}/?token=${encodeURIComponent(token)}`
 }

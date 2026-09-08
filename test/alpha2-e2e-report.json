@@ -1,0 +1,234 @@
+{
+  "at": "2026-09-08T13:29:28.944Z",
+  "results": [
+    {
+      "scenario": "A-streaming",
+      "ok": true,
+      "msg": "最终钉底距离 0.0px；流式最大离底 75px；最大追击停顿 0ms",
+      "extra": {
+        "maxPauseRunMs": 0
+      }
+    },
+    {
+      "scenario": "B-takeover",
+      "ok": true,
+      "msg": "滚轮接管后位置稳定：漂移 0.0px、追击已停（chase=false）、离底 1797px（滚轮作用 1423px）",
+      "extra": {
+        "beforeWheel": {
+          "getter": 1423,
+          "real": 1423,
+          "floor": 1423,
+          "height": 2247,
+          "distance": 0,
+          "scrollY": 0,
+          "chase": false,
+          "patched": true
+        },
+        "afterWheel1": {
+          "getter": 0,
+          "real": 0,
+          "floor": 1574,
+          "height": 2398,
+          "distance": 1574,
+          "scrollY": 0,
+          "chase": false,
+          "patched": true
+        },
+        "afterWheel2": {
+          "getter": 0,
+          "real": 0,
+          "floor": 1768,
+          "height": 2592,
+          "distance": 1768,
+          "scrollY": 0,
+          "chase": false,
+          "patched": true
+        },
+        "stab": [
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1768,
+            "distance": 1768,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1768,
+            "distance": 1768,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1795,
+            "distance": 1795,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          },
+          {
+            "t": null,
+            "getter": 0,
+            "real": 0,
+            "floor": 1797,
+            "distance": 1797,
+            "chase": false
+          }
+        ]
+      }
+    },
+    {
+      "scenario": "B-backToLatest",
+      "ok": true,
+      "msg": "「回到最新」后钉底：距离 0.0px"
+    },
+    {
+      "scenario": "C-railJump",
+      "ok": true,
+      "msg": "导轨跳转后位置稳定（漂移 0.0px，离底 2877px；点击「跳转到第 1 轮」）"
+    },
+    {
+      "scenario": "D-reduced",
+      "ok": true,
+      "msg": "reduced-motion 下瞬时钉底：内容增长后 220ms 内距底 <=2px"
+    },
+    {
+      "scenario": "no-console-errors",
+      "ok": true,
+      "msg": "浏览器无 console.error/pageerror（0 条）"
+    }
+  ],
+  "failures": 0,
+  "consoleErrors": []
+}
